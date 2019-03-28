@@ -1,0 +1,89 @@
+---
+title: "Movie_Data"
+author: "Michael Candella"
+date: "March 27, 2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Movie Analysis
+  Here is a Sample of Movie Analysis, for my data I decided to take all oscar nominated films from rotten tomatoes and painstakingly sort them by genre, rotten tomatoes score, year, decade, and title. 
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(readr)
+Movie <- read_csv("Movie.csv")
+library(ggplot2)
+library(plotly)
+library(dplyr)
+
+Decade<-Movie$Decade
+Name<-Movie$Name
+Critic<-Movie$RT_Score
+Audience<-Movie$A_Score
+Genre<-Movie$Genre
+
+
+Movie %>%
+plot_ly(x= ~Critic,y=~Audience, color = ~Genre,hoverinfo="text",
+        text=~paste("Movie Title:",Name,"<br>","RT Score:",Critic,"<br>","Audience Score:",Audience,"<br>","Genre:",Genre))%>%
+  add_markers()%>%
+  layout(title="Audience Scores and RT Scores for Oscar Nominated Films (1980-2018)")
+
+Drama<-Movie%>%
+  filter(Movie$Genre=="Drama")
+
+Action<-Movie%>%
+  filter(Movie$Genre=="Action")
+
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+P1<-Drama%>%
+plot_ly(x=~Drama$RT_Score,y=~Drama$A_Score,color = ~Drama$Decade,hoverinfo="text",
+        text=~paste("Movie Title:",Drama$Name,"<br>","RT Score:",Drama$RT_Score,"<br>","Audience Score:",Drama$A_Score,"<br>","Year:",Drama$Year))%>%
+  add_markers()%>%
+  layout(title="Scores for Oscar Nominated Dramas and Action Films (1980-2018)")
+
+
+P2<-Action%>%
+  plot_ly(x=~Action$RT_Score,y=~Action$A_Score,color=~Action$Decade,hoverinfo="text",
+        text=~paste("Movie Title:",Action$Name,"<br>","RT Score:",Action$RT_Score,"<br>","Audience Score:",Action$A_Score,"<br>","Year:",Action$Year))%>%
+  add_markers()%>%
+  layout(showlegend=FALSE)
+
+subplot(P1,P2,nrows=1)
+```
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+Win <- read_csv("Win.csv") #Read Win
+Movie <- read_csv("Movie.csv")#Read Movies
+Year<-Movie$Year
+NewMovies<-cbind(Critic,Audience,Year) ##Combine RT and Audience and Year
+
+Average_Year<-aggregate(NewMovies,list(Year),mean) #Take the Average of each year
+
+Winning<-Win$Winner #Winning Movie for Each Year
+
+Time_series<-cbind(Average_Year,Winning) #Combine all Columns
+
+Time<-data.frame(Time_series)
+
+
+Time%>%
+  plot_ly(x=~Time$Year,y=~Time$Critic,hoverinfo="text",
+          text=~paste("Year:",Time$Year,"<br>","Average Score:",Time$Critic,"<br>","Best Picture",Winning))%>%
+  add_lines() %>%
+  layout(xaxis=list(title="Year (1980-2018)"),
+         yaxis=list(title="Average Rotten Tomatoes Score"),
+         title="Average RT Score for Oscar Nominated Films by Year")
+
+Time%>%
+  plot_ly(x=~Time$Year,y=~Time$Audience,hoverinfo="text",
+          text=~paste("Year:",Time$Year,"<br>","Average Score:",Time$Audience,"<br>","Best Picture",Winning))%>%
+  add_lines() %>%
+  layout(xaxis=list(title="Year (1980-2018)"),
+         yaxis=list(title="Average Rotten Tomatoes Score"),
+         title="Average Audience Score for Oscar Nominated Films by Year")
